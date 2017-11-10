@@ -9,7 +9,7 @@ library('rpart.plot')
 #library('ROCR')
 library('pROC')
 library('rattle')
-# library('RColorBrewer')
+library('RColorBrewer')
 
 rm(list = ls())
 cat('\014')
@@ -105,83 +105,92 @@ alumnos[edad >= 30 & edad < 40]$r.edad <- '30 - 40'
 alumnos[edad >= 40 & edad < 50]$r.edad <- '40 - 50'
 alumnos[edad >= 50]$r.edad <- '50+'
 
-# Los cinco cursos con más demanda
-alumnos[is.na(curso)]$curso <-
-  alumnos[is.na(curso)]$programa
-alumnos[curso == 'Taller Adultos']$curso <-
-  alumnos[curso == 'Taller Adultos']$programa
-alumnos[is.na(curso)]$curso <- 'No aplicable'
-t <- as.data.table(table(alumnos$curso))
+# # Los cinco cursos con más demanda
+# alumnos[is.na(curso)]$curso <-
+#   alumnos[is.na(curso)]$programa
+# alumnos[curso == 'Taller Adultos']$curso <-
+#   alumnos[curso == 'Taller Adultos']$programa
+# alumnos[is.na(curso)]$curso <- 'No aplicable'
+# t <- as.data.table(table(alumnos$curso))
+# setorder(t, -N)
+# t[, CumSum := cumsum(N)]
+# cursos <- t$V1[1:5]
+# alumnos <- alumnos[curso %in% cursos]
+# rm(t)
+
+# Los cinco programas con más demanda
+alumnos[is.na(programa)]$programa <-
+  alumnos[is.na(programa)]$curso
+alumnos[is.na(programa)]$programa <- 'Otro programa'
+t <- as.data.table(table(alumnos$programa))
 setorder(t, -N)
 t[, CumSum := cumsum(N)]
-cursos <- t$V1[1:5]
-alumnos <- alumnos[curso %in% cursos]
-rm(t)
-
-# # los cursos 2 y 3 son iguales
-# alumnos[curso %in% c('Gráfica Digital (Regular)', 'Gráfica Digital (Intensivo)')]$curso <-
-#   'Gráfica digital'
+programas <- t$V1[1:10]
+alumnos <- alumnos[programa %in% programas]
+rm(t, programas)
 
 # Distritos
 d <- as.data.table(table(alumnos$distrito))
 setorder(d, -N)
 d[, CumSum := cumsum(N)]
-distritos <- d$V1[1:4]
+distritos <- d$V1[1:5]
 alumnos[!(distrito %in% distritos)]$distrito <- 'Otro distrito'
-rm(d)
+rm(d, distritos)
 
 # Medio información
 m <- as.data.table(table(alumnos$medio.informa))
 setorder(m, -N)
 m[, CumSum := cumsum(N)]
-medios <- m$V1[1:4]
+medios <- m$V1[1:5]
 alumnos[!(medio.informa %in% medios)]$medio.informa <- 'Otro medio'
-rm(m)
+rm(m, medios)
 
 # Profesión
 p <- as.data.table(table(alumnos$profesion))
 setorder(p, -N)
 p[, CumSum := cumsum(N)]
-profesiones <- p$V1[1:3]
-alumnos <- alumnos[profesion %in% profesiones]
-rm(p)
+profesiones <- p$V1[1:5]
+alumnos[!(profesion %in% profesiones)]$profesion <- 'Otra Profesión'
+rm(p, profesiones)
 
 # Sexo
 alumnos[is.na(sexo)]$sexo <- 'No indica'
 
 # Estado civil
-alumnos[is.na(est.civil)]$est.civil <- 'Otro'
-alumnos$est.civil <- as.factor(alumnos$est.civil)
+alumnos[is.na(est.civil)]$est.civil <- 'Otro e.civil'
 
 # Tipo cliente
-alumnos[is.na(tipo.cliente)]$tipo.cliente <- 'Otro'
+alumnos[is.na(tipo.cliente)]$tipo.cliente <- 'Otro t.cliente'
 
 # Paga matrícula
-alumnos[is.na(paga.mat.)]$paga.mat. <- 'Otro'
-
-# Programa1
-alumnos[is.na(programa1)]$programa1 <- 'Otro'
+alumnos[is.na(paga.mat.)]$paga.mat. <- 'Otro pago'
 
 # NA omit
-alumnos <- alumnos[, c('curso', 'sexo', 'distrito', 'medio.informa',
-  'r.edad', 'profesion', 'est.civil')]
+alumnos <-
+  alumnos[, c('programa',
+              'sexo',
+              'distrito',
+              'medio.informa',
+              'r.edad',
+              'profesion',
+              'est.civil')]
 alumnos <- na.omit(alumnos)
 
-alumnos$curso <- as.factor(alumnos$curso)
+# alumnos$curso <- as.factor(alumnos$curso)
+alumnos$programa <- as.factor(alumnos$programa)
 alumnos$sexo <- as.factor(alumnos$sexo)
-alumnos$paga.mat. <- as.factor(alumnos$paga.mat.)
-alumnos$programa1 <- as.factor(alumnos$programa1)
-alumnos$tipo.cliente <- as.factor(alumnos$tipo.cliente)
-alumnos$profesion <- as.factor(alumnos$profesion)
-alumnos$medio.informa <- as.factor(alumnos$medio.informa)
 alumnos$distrito <- as.factor(alumnos$distrito)
-
+alumnos$medio.informa <- as.factor(alumnos$medio.informa)
+alumnos$profesion <- as.factor(alumnos$profesion)
+alumnos$est.civil <- as.factor(alumnos$est.civil)
+alumnos$paga.mat. <- as.factor(alumnos$paga.mat.)
+alumnos$tipo.cliente <- as.factor(alumnos$tipo.cliente)
 
 # chng.cols <- names(Filter(is.character, alumnos))
 # id.chng.cols <- paste('id', chng.cols, sep = '.')
 # alumnos[, (id.chng.cols) := lapply(.SD, as.factor), .SDcols = chng.cols]
 # alumnos[, (id.chng.cols) := lapply(.SD, as.numeric), .SDcols = id.chng.cols]
-# 
+
 # a <- alumnos[, ..id.chng.cols]
 
 train.vector <- sample(c(TRUE, FALSE), nrow(alumnos), replace = TRUE)
@@ -204,51 +213,57 @@ test <- alumnos[test.vector]
 # train <- alumnos[1:round(nrow(alumnos)/2, 0)]
 # test <- alumnos[(round(nrow(alumnos)/2, 0) + 1):nrow(alumnos)]
 
-# Árbol de decisión
+# Árbol de decisión ----
 rp <-
   rpart(
-    curso ~ sexo + distrito + medio.informa +
+    programa ~ sexo + distrito + medio.informa +
       r.edad + profesion + est.civil,
     data = train
   )
 
+fancyRpartPlot(rp)
+
 rpart.plot(rp)
 
 par(mfrow = c(1, 3))
-truestat <- as.integer(test$curso)
-testres <- (as.integer(predict(rp, test, type = 'class')) == truestat)
-print('RPart')
+truestat <- as.integer(test$programa)
+predstat <- as.integer(predict(rp, test, type = 'class'))
+testres <- (predstat == truestat)
+print('***RPart')
+print('*Matriz de confusión')
+print(as.matrix(table(predstat,  truestat)))
+print('*Resultados acertados')
 print(as.matrix(table(testres,  truestat)))
 print(roc(testres, truestat)$auc)
 plot(roc(testres, truestat), col = 'red', main = 'RPart')
 
-# SVM
-library(e1071)
-tune.out <-
-  tune(
-    svm,
-    as.integer(curso) ~ sexo + distrito + medio.informa +
-      r.edad + profesion + est.civil,
-    data = train,
-    kernel = 'radial',
-    ranges = list(
-      cost = c(0.1, 1, 10, 100, 1000),
-      gamma = c(0.5, 1, 2, 3, 4)
-    )
-  )
-
-truestat <- as.integer(test$curso)
-testres <- (as.integer(predict(tune.out$best.model, test)) == truestat)
-print('SVM')
-print(as.matrix(table(testres,  truestat)))
-print(roc(testres, truestat)$auc)
-plot(roc(testres, truestat), col = 'red', main = 'RPart')
+# # SVM
+# library(e1071)
+# tune.out <-
+#   tune(
+#     svm,
+#     as.integer(programa) ~ sexo + distrito + medio.informa +
+#       r.edad + profesion + est.civil,
+#     data = train,
+#     kernel = 'radial',
+#     ranges = list(
+#       cost = c(0.1, 1, 10, 100, 1000),
+#       gamma = c(0.5, 1, 2, 3, 4)
+#     )
+#   )
+# 
+# truestat <- as.integer(test$programa)
+# testres <- (as.integer(predict(tune.out$best.model, test)) == truestat)
+# print('SVM')
+# print(as.matrix(table(testres,  truestat)))
+# print(roc(testres, truestat)$auc)
+# plot(roc(testres, truestat), col = 'red', main = 'RPart')
 
 # Random forest
 library(randomForest)
 rf <-
   randomForest(
-    curso ~ sexo + distrito + medio.informa +
+    programa ~ sexo + distrito + medio.informa +
       r.edad + profesion + est.civil,
     data = train,
     method = 'class',
@@ -256,9 +271,13 @@ rf <-
   )
 
 # plot(rf)
-truestat <- as.integer(test$curso)
-testres <- (as.integer(predict(rf, test, type = 'class')) == truestat)
-print('Random forest')
+truestat <- as.integer(test$programa)
+predstat <- as.integer(predict(rf, test, type = 'class'))
+testres <- (predstat == truestat)
+print('***Random forest')
+print('*Matriz de confusión')
+print(as.matrix(table(predstat,  truestat)))
+print('*Resultados acertados')
 print(as.matrix(table(testres,  truestat)))
 print(roc(testres, truestat)$auc)
 plot(roc(testres, truestat), col = 'red', main = 'RandomForest')
@@ -267,14 +286,18 @@ plot(roc(testres, truestat), col = 'red', main = 'RandomForest')
 library(party)
 fit <-
   cforest(
-    curso ~ sexo + distrito + medio.informa +
+    programa ~ sexo + distrito + medio.informa +
       r.edad + profesion + est.civil,
     data = train
   )
-truestat <- as.integer(test$curso)
-testres <- (as.integer(predict(fit, test, OOB = TRUE, type = 'response')) == truestat)
-
-print('Party')
+truestat <- as.integer(test$programa)
+predstat <- as.integer(predict(fit, test, OOB = TRUE, type = 'response'))
+testres <- (predstat == truestat)
+print('***Party')
+print('Matriz de confusión')
+print(as.matrix(table(predstat,  truestat)))
+print('*Resultados acertados')
 print(as.matrix(table(testres,  truestat)))
 print(roc(testres, truestat)$auc)
 plot(roc(testres, truestat), col = 'red', main = 'Party')
+
